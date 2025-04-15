@@ -1,3 +1,4 @@
 active = "local"
 
 [profiles]
+PREFECT_API_DATABASE_CONNECTION_URL="postgresql+asyncpg://postgres:Pass123*@localhost:5432/prefect"
