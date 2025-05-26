@@ -9,4 +9,13 @@ dependencies = [
     "psycopg2",
     "psycopg2-binary",
     "pydantic",
+    "loguru",
+    "motor",
+    "numpy",
+    "pandas",
+    "pendulum",
+    "pymongo",
+    "pyodbc",
+    "python-dotenv",
+    "sshtunnel",
 ]
