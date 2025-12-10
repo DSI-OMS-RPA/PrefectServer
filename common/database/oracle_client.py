@@ -1,16 +1,19 @@
 import platform
 from typing import List, Dict, Any, Optional, Union, Tuple
+
+from prefect.variables import Variable
+
 from common.logging import get_logger
 from common.config import config
 from blocks.infrastructure import InfrastructureConfig
-from prefect.blocks.system import Secret
 import oracledb
 
 
 if platform.system() == "Windows":
     oracledb.init_oracle_client(config("ORACLE_CLIENT_DIR_WIN"))
 elif platform.system() == "Linux":
-    oracledb.init_oracle_client(Secret.load("oracle-client-linux-dir").get())
+    client_dir = Variable.get("oracle_client_dir")
+    oracledb.init_oracle_client(client_dir)
 
 
 class OracleClient:
