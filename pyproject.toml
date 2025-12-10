@@ -11,7 +11,7 @@ dependencies = [
     "oracledb>=3.1.1",
     "pandas",
     "pendulum",
-    "prefect>=3.3.4",
+    "prefect>=3.6.5",
     "psycopg2>=2.9.10",
     "psycopg2-binary>=2.9.10",
     "pydantic>=2.11.4",
