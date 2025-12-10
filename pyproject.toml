@@ -5,17 +5,23 @@ description = "Prefect server for CVT/DSI ETL projects"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "prefect>=3.3.4",
-    "psycopg2",
-    "psycopg2-binary",
-    "pydantic",
     "loguru",
     "motor",
-    "numpy",
+    "numpy>=2.2.5",
+    "oracledb>=3.1.1",
     "pandas",
     "pendulum",
+    "prefect>=3.3.4",
+    "psycopg2>=2.9.10",
+    "psycopg2-binary>=2.9.10",
+    "pydantic>=2.11.4",
     "pymongo",
     "pyodbc",
     "python-dotenv",
     "sshtunnel",
+]
+
+[dependency-groups]
+dev = [
+    "vulture>=2.14",
 ]

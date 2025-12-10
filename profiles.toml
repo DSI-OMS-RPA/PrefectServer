@@ -1,0 +1,11 @@
+active = "local"
+
+[profiles.local]
+PREFECT_API_URL = "http://127.0.0.1:4200/api"
+PREFECT_API_DATABASE_CONNECTION_URL = "postgresql+asyncpg://postgres:Pass123*@localhost:5432/prefect"
+PREFECT_LOGGING_LEVEL = "DEBUG"
+
+[profiles.etl-project-prod]
+PREFECT_API_URL = "http://192.168.87.59:8507/api"
+PREFECT_LOGGING_LEVEL = "INFO"
+PREFECT_API_DEFAULT_LIMIT = 100
