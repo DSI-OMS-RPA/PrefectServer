@@ -568,7 +568,7 @@ def partial_billing_monitoring_flow(month: str):
 
 
 if __name__ == "__main__":
-    partial_billing_monitoring_flow("06-2024")
+    partial_billing_monitoring_flow("11-2024")
     # start_dt = datetime(2023, 1, 1)
     # end_dt = datetime(2025, 6, 30)
 
