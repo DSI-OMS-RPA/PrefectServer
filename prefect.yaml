@@ -1,0 +1,193 @@
+name: etl-prefect-projects
+
+# build section allows you to manage and build docker images
+build: null
+
+# push section allows you to manage if and how this project is uploaded to remote locations
+push: null
+
+# pull section allows you to provide instructions for cloning this project in remote locations
+pull:
+- prefect.deployments.steps.git_clone:
+    id: clone-step
+    repository: https://github.com/eric-martial/etl-prefect-projects.git
+    branch: main
+    credentials: '{{ prefect.blocks.github-credentials.github-access-token }}'
+
+deployments:
+- name: IMEI Device Inventory
+  version: null
+  tags: []
+  concurrency_limit: null
+  description: |-
+    Main flow for tracking IMEIs with intelligent date handling.
+
+    This flow:
+    1. Checks the last processed date from state storage
+    2. If first run or reset=True: processes from the beginning of current month
+    3. For daily runs: processes only new dates after the last processed date
+    4. Saves state after successful processing
+
+    Args:
+        reset: If True, reprocess from the beginning of the current month
+
+    Returns:
+        Summary statistics of the ETL operation
+  entrypoint: flows/DMK/imei_tracking_flow.py:imei_tracking_flow
+  parameters: {}
+  work_pool:
+    name: production-pool
+    work_queue_name: null
+    job_variables: {}
+  schedules:
+  - cron: 0 6 * * *
+    timezone: Atlantic/Cape_Verde
+    day_or: true
+    active: true
+
+- name: IMEI ETL Pipeline
+  version: null
+  tags: ["etl", "imei", "dsi"]
+  description: |-
+    ETL pipeline that extracts IMEI data from SQL Server Mediation database,
+    processes it, and loads it into MongoDB collections organized by year.
+    
+    This flow:
+    1. Determines which dates need to be processed
+    2. Extracts data from SQL Server for each date
+    3. Processes and transforms the records
+    4. Loads the data into MongoDB with efficient batching
+    5. Tracks performance metrics and generates reports
+  entrypoint: flows/DSI/imei_pipeline.py:imei_etl_flow
+  parameters:
+    reset: false
+  work_pool:
+    name: production-pool
+    work_queue_name: null
+    job_variables: {}
+  schedules:
+  - cron: 0 5 * * *
+    timezone: Atlantic/Cape_Verde
+    day_or: true
+    active: true
+
+- name: CDR Data Migration
+  entrypoint: flows/DSI/cdr_migration.py:enhanced_cdr_migration_flow
+  parameters:
+    start_date: "2022-01-01"
+    end_date: "2022-12-31"
+    processing_mode: daily
+    max_parallel_types: 3
+    batch_size: 100000
+    check_existing: true
+  work_pool:
+    name: cdr-migration-pool
+  schedules: null
+
+- name: CDR Data Deletion
+  entrypoint: flows/DSI/cdr_deletion.py:cdr_deletion_flow
+  parameters:
+    start_date: "2022-01-01"
+    end_date: "2022-03-31"
+    processing_mode: "monthly"
+    max_parallel_types: 3
+    batch_size: 500000
+    dry_run: true
+  work_pool:
+    name: cdr-migration-pool
+  schedules: null
+
+- name: Billing Process Duration Tracking
+  version: null
+  tags: ["etl", "billing", "faturacao", "oracle", "postgresql"]
+  concurrency_limit: null
+  description: |-
+    ETL pipeline that extracts billing process duration data from Oracle BRM database
+    and loads it into PostgreSQL for analysis and reporting.
+    
+    This flow:
+    1. Validates month parameter (mm-yyyy format)
+    2. Extracts billing process data from Oracle for specified month window
+    3. Validates and filters data (valid segments, non-zero durations)
+    4. Checks data completeness (4 processes per segment)
+    5. Stores validated data into PostgreSQL faturacao_process table
+    6. Generates comprehensive quality and validation reports
+    
+    Tracks 4 billing processes: BILLING → INVOICING → RELATORIO PROVISORIO → RELATORIO DEFINITIVA
+    
+    Args:
+        month: Month to process in "mm-yyyy" format (e.g., "03-2025")
+    
+    Returns:
+        Summary statistics including validation and completeness metrics
+  entrypoint: flows/DSI/faturacao_duration.py:billing_process_etl_flow
+  parameters:
+    month: "01-2025"
+  work_pool:
+    name: production-pool
+  schedules: null
+
+- name: Partial Billing Monitoring
+  version: null
+  tags: ["etl", "billing", "faturacao", "ssh", "brm", "oracle", "prerequisite"]
+  concurrency_limit: null
+  description: |-
+    Monitors remote partial billing log files on BRM server and triggers the main billing process flow.
+    
+    This flow serves as the prerequisite step (process_step=0) for the billing process pipeline:
+    1. Connects to BRM server via SSH to monitor partial billing log files
+    2. Parses log content to extract process timing and status information
+    3. Stores partial billing data as process_step=0 in PostgreSQL faturacao_process table
+    4. Automatically triggers the main billing process ETL flow upon successful completion
+    
+    Process Flow: PARTIAL BILLING (0) → BILLING (1) → INVOICING (2) → RELATORIO PROVISORIO (3) → RELATORIO DEFINITIVA (4)
+    
+    Features:
+    - Remote log file monitoring via SSH with multiple fallback methods
+    - Robust timestamp extraction from log content and file system
+    - Comprehensive error handling and detailed logging
+    - Automatic triggering of downstream billing processes
+    - Complete audit trail with Prefect artifacts
+    
+    Args:
+        month: Month to process in "mm-yyyy" format (e.g., "06-2025")
+    
+    Returns:
+        Summary with partial billing status, duration, and main billing flow trigger status
+  entrypoint: flows/DSI/partial_billing_monitoring.py:partial_billing_monitoring_flow
+  parameters:
+    month: "06-2025"
+  work_pool:
+    name: production-pool
+  schedules: null
+
+- name: Reseller File Processing
+  version: null
+  tags: ["etl", "reseller", "sftp", "postgresql"]
+  description: |-
+    Processes reseller files from an SFTP server and loads the data into a PostgreSQL database.
+
+    This flow:
+    1. Parses a date parameter to determine which files to process (daily or monthly).
+    2. Connects to the SFTP server and discovers files matching the date patterns.
+    3. Processes each file in parallel, handling both 'vendas' and 'carregamentos' types.
+    4. Validates CSV data row by row and handles malformed records gracefully.
+    5. Inserts valid records into the corresponding PostgreSQL tables.
+    6. Supports forced reprocessing of files that have already been loaded.
+
+    Args:
+        date_input: The date to process, in "MM-YYYY" or "DD-MM-YYYY" format.
+        file_types: Optional list to filter by file type (e.g., ["vendas"]).
+        force_reprocess: If True, deletes existing records for a file before inserting new ones.
+        test_connection: If True, performs a connection test to the SFTP server before starting.
+
+    Returns:
+        A summary of the processing, including file counts, record counts, and error details.
+  entrypoint: flows/DSI/reseller_file_processing.py:sftp_reseller_file_processing_flow
+  parameters:
+    date_input: "09-2025"
+    force_reprocess: false
+    test_connection: true
+  work_pool:
+    name: production-pool
+  schedules: []
