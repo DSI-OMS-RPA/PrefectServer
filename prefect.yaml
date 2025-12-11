@@ -71,19 +71,6 @@ deployments:
     day_or: true
     active: true
 
-- name: CDR Data Migration
-  entrypoint: flows/DSI/cdr_migration.py:enhanced_cdr_migration_flow
-  parameters:
-    start_date: "2022-01-01"
-    end_date: "2022-12-31"
-    processing_mode: daily
-    max_parallel_types: 3
-    batch_size: 100000
-    check_existing: true
-  work_pool:
-    name: cdr-migration-pool
-  schedules: null
-
 - name: CDR Data Deletion
   entrypoint: flows/DSI/cdr_deletion.py:cdr_deletion_flow
   parameters:
