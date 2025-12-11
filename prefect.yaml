@@ -10,7 +10,7 @@ push: null
 pull:
 - prefect.deployments.steps.git_clone:
     id: clone-step
-    repository: https://github.com/eric-martial/etl-prefect-projects.git
+    repository: https://github.com/DSI-OMS-RPA/PrefectServer.git
     branch: main
     credentials: '{{ prefect.blocks.github-credentials.github-access-token }}'
 
