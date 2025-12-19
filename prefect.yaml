@@ -11,7 +11,7 @@ pull:
 - prefect.deployments.steps.git_clone:
     id: clone-step
     repository: https://github.com/DSI-OMS-RPA/PrefectServer.git
-    branch: main
+    branch: master
     credentials: '{{ prefect.blocks.github-credentials.github-access-token }}'
 
 deployments:
