@@ -768,6 +768,7 @@ class MongoDBClient:
             remote_bind_address=(mongo_host, mongo_port),
             set_keepalive=60.0,
             allow_agent=False,
+            ssh_pkeys=[],
         )
         ssh_tunnel.start()
         self.logger.info(
