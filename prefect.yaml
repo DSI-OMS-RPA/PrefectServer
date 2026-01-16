@@ -137,16 +137,19 @@ deployments:
     - Complete audit trail with Prefect artifacts
     
     Args:
-        month: Month to process in "mm-yyyy" format (e.g., "06-2025")
+        month: Month to process in "mm-yyyy" format (defaults to previous month if not provided)
     
     Returns:
         Summary with partial billing status, duration, and main billing flow trigger status
   entrypoint: flows/DSI/partial_billing_monitoring.py:partial_billing_monitoring_flow
-  parameters:
-    month: "06-2025"
+  parameters: {}
   work_pool:
     name: production-pool
-  schedules: null
+  schedules:
+  - cron: 0 6 7 * *
+    timezone: Atlantic/Cape_Verde
+    day_or: true
+    active: true
 
 - name: Reseller File Processing
   version: null

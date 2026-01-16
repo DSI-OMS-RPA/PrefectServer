@@ -1,6 +1,6 @@
 # flows/DSI/partial_billing_monitoring.py
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Optional, Any
 from prefect import flow, task, get_run_logger
@@ -445,6 +445,13 @@ def partial_billing_monitoring_flow(month: str):
     logger = get_run_logger()
     logger.info(f"Starting Partial Billing Monitoring for month: {month}")
     ssh_connection = None
+
+    # Default to previous month if not provided
+    if month is None:
+        from datetime import datetime
+        prev_month = datetime.now().replace(day=1) - timedelta(days=1)
+        month = prev_month.strftime("%m-%Y")
+        logger.info(f"No month parameter provided, defaulting to previous month: {month}")
 
     try:
         # Step 1: Validate month parameter
