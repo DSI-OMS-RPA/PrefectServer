@@ -105,7 +105,7 @@ def find_remote_log_file(
 
     # Base pattern without wildcards
     base_pattern = (
-        f"PARTIAL_BILLING_.*_{month_info['month_num']}_{month_info['year']}\.log"
+        rf"PARTIAL_BILLING_.*_{month_info['month_num']}_{month_info['year']}\.log"
     )
     regex_pattern = re.compile(base_pattern)
     logger.info(f"Using base pattern: {regex_pattern.pattern}")
